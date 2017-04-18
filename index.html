@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Firebase Stories</title>
+</head>
+<body>
+    
+    <input type="file" id="fotito" value="Sube tu foto papucho">
+    <button id="botoncito">Subir a mi jistori</button>
+    
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/3.7.8/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCKIavU-uEpPKKI8HZj4mgRFPHaPfBhJvs",
+    authDomain: "fixterprueba-7b391.firebaseapp.com",
+    databaseURL: "https://fixterprueba-7b391.firebaseio.com",
+    projectId: "fixterprueba-7b391",
+    storageBucket: "fixterprueba-7b391.appspot.com",
+    messagingSenderId: "130146058675"
+  };
+  firebase.initializeApp(config);
+</script>
+
+<script>
+    $('#botoncito').click(function(){
+        var storage = firebase.storage();
+        var storageRef = storage.ref();
+        var file = $('#fotito').prop('files')[0];
+        console.log(file);
+        var uploadTask = storageRef.child('stories/' + file.name).put(file);
+        var downloadURL = uploadTask.snapshot.downloadURL;
+        console.log(downloadURL);
+    });
+</script>
+</body>
+</html>

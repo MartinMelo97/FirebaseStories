@@ -7,9 +7,22 @@
     <title>Firebase Stories</title>
 </head>
 <body>
-    
-    <input type="file" id="fotito" value="Sube tu foto papucho">
-    <button id="botoncito">Subir a mi jistori</button>
+
+    <style>
+        #formUpload{
+            display: none;
+        }
+    </style>
+
+    <button id="btnFacebook">Inicia sesión con Facebook para poder compartir tu día!</button>
+
+    <div id="formUpload">
+        <input type="file" id="fotito" value="Sube tu foto papucho">
+        <input type="text" placeholder="Alguna descripción, guapo?" id="description">
+        <progress value=0 max=100 id="progressbar">0</progress>
+        <button id="botoncito">Subir a mi jistori</button>
+        <button id="btnLogout">Logout</button>
+    </div>
     
 <script
   src="https://code.jquery.com/jquery-3.2.1.min.js"
@@ -30,15 +43,75 @@
 </script>
 
 <script>
-    $('#botoncito').click(function(){
-        var storage = firebase.storage();
-        var storageRef = storage.ref();
-        var file = $('#fotito').prop('files')[0];
-        console.log(file);
-        var uploadTask = storageRef.child('stories/' + file.name).put(file);
-        var downloadURL = uploadTask.snapshot.downloadURL;
-        console.log(downloadURL);
+    //Scripts para autenticacion
+    $('#btnFacebook').click(function(){
+        var provider = new  firebase.auth.FacebookAuthProvider();
+        firebase.auth().signInWithPopup(provider)
+            .then(function(result){
+                var user = result.user;
+                console.log(user);
+            });
     });
+
+    $('#btnLogout').click(function(){
+        firebase.auth().signOut()
+            .then(function(){
+                console.log("Ya me sali");
+            });
+    });
+
+    firebase.auth().onAuthStateChanged(function(user){
+        if(user)
+        {
+            var uid = user.uid;
+            console.log("El udi " + uid);
+            $('#formUpload').fadeIn();
+            $('#btnFacebook').fadeOut();
+
+            //Scrips para storage y database
+            $('#botoncito').click(function(){
+                var db = firebase.database();
+                var storage = firebase.storage();
+                var storageRef = storage.ref();
+                var file = $('#fotito').prop('files')[0];
+                console.log(file);
+                var uploadTask = storageRef.child('stories/' + uid + '/' + file.name).put(file);
+                
+                uploadTask.on('state_changed', function(snapshot){
+                    console.log("Transferidos: "+ snapshot.bytesTransferred);
+                    console.log("Total: "+ snapshot.totalBytes);
+                    var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    $('#progressbar').val(progress);
+                    console.log("Upload is " + progress + "% done");
+
+                }, function(error){
+                    switch(error.code){
+                        case 'storage/unauthorized':
+                            console.log("No tienes permiso");
+                        break;
+                        case 'storage/canceled':
+                            console.log("Usuario canceló la descarga");
+                        break;
+                    }
+                },
+                function(){
+                    console.log("Se subio papu");
+                    var downloadURL = uploadTask.snapshot.downloadURL;
+                    uploadToDatabase(downloadURL);
+                    
+                });
+
+                function uploadToDatabase(URLmedia){
+                    var descripcion = $('#description').val();
+                    db.ref('historias/' + uid).push({
+                        media: URLmedia,
+                        descripcion: descripcion
+                    });
+                }
+            });
+        }
+    });
+    
 </script>
 </body>
 </html>

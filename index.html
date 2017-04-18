@@ -12,22 +12,54 @@
         #formUpload{
             display: none;
         }
+
+        .card{
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+            display: inline-block;
+            padding: 20px;
+            margin: 20px;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+        }
+
+        .imagen_client{
+            border-radius: 50%;
+        }
+
+        .imagen_story{
+            width: 200px;
+            height: 200px;
+        }
     </style>
 
     <button id="btnFacebook">Inicia sesión con Facebook para poder compartir tu día!</button>
 
     <div id="formUpload">
+
+        <div id="storiesList" class="putodiv">
+
+        </div>
+
         <input type="file" id="fotito" value="Sube tu foto papucho">
         <input type="text" placeholder="Alguna descripción, guapo?" id="description">
         <progress value=0 max=100 id="progressbar">0</progress>
         <button id="botoncito">Subir a mi jistori</button>
         <button id="btnLogout">Logout</button>
+
+        <div id="storyDetail">
+
+        </div>
+        
     </div>
     
 <script
   src="https://code.jquery.com/jquery-3.2.1.min.js"
   integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
   crossorigin="anonymous"></script>
+
 <script src="https://www.gstatic.com/firebasejs/3.7.8/firebase.js"></script>
 <script>
   // Initialize Firebase
@@ -43,13 +75,13 @@
 </script>
 
 <script>
+
     //Scripts para autenticacion
     $('#btnFacebook').click(function(){
         var provider = new  firebase.auth.FacebookAuthProvider();
         firebase.auth().signInWithPopup(provider)
             .then(function(result){
                 var user = result.user;
-                console.log(user);
             });
     });
 
@@ -61,21 +93,52 @@
     });
 
     firebase.auth().onAuthStateChanged(function(user){
+        var db = firebase.database();
+        var storage = firebase.storage();
         if(user)
         {
             var uid = user.uid;
-            console.log("El udi " + uid);
+            var exists = false;
             $('#formUpload').fadeIn();
             $('#btnFacebook').fadeOut();
+            db.ref('usuarios').once('value')
+                .then(function(snapshot)
+                {
+                    snapshot.forEach(function(key){
+                        console.log(key.val());
+                        if(key.val().uid == uid)
+                        {
+                            exists = true;
+                        }
+                    });
+                    if(exists == false)
+                    {
+                        db.ref('usuarios').push({
+                            uid: uid,
+                            nombre: user.displayName,
+                            email: user.email,
+                            profileImage: user.photoURL
+                        });
+                    }
+                });
+            
+            //Traigo las stories
+            db.ref('usuarios').once('value')
+                .then(function(snapshot){
+                    snapshot.forEach(function(client)
+                    {
+                        //console.log(client.val());
+                        $('#storiesList').append('<div class="card" data-id="'+client.val().uid+'"><img src="' + client.val().profileImage +'" class="imagen_client"><h3 class="nombrecito">'+client.val().nombre+'</h3></div>');
+                    });0
+                });
 
             //Scrips para storage y database
             $('#botoncito').click(function(){
-                var db = firebase.database();
-                var storage = firebase.storage();
                 var storageRef = storage.ref();
                 var file = $('#fotito').prop('files')[0];
                 console.log(file);
-                var uploadTask = storageRef.child('stories/' + uid + '/' + file.name).put(file);
+                var d = Date.now();
+                var uploadTask = storageRef.child('stories/' + uid + '/' + file.name + d).put(file);
                 
                 uploadTask.on('state_changed', function(snapshot){
                     console.log("Transferidos: "+ snapshot.bytesTransferred);
@@ -109,8 +172,22 @@
                     });
                 }
             });
+
+            $(document).on('click','.card',function(){
+                var uid = $(this).data('id');
+                console.log(uid);
+                $('#storyDetail').text('');
+                db.ref('historias/' + uid).on('child_added', function(story)
+                    {
+                        //snapshot.forEach(function(story){
+
+                            $('#storyDetail').append('<div class="card" data-id="'+story.val().uid+'"><img src="' + story.val().media +'" class="imagen_story"><h5 class="descripcion">'+story.val().descripcion+'</h3></div>');
+                        //});
+                    });
+            });
         }
     });
+
     
 </script>
 </body>

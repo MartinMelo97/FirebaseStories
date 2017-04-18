@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/css/materialize.min.css">
     <title>Firebase Stories</title>
 </head>
 <body>
 
     <style>
-        #formUpload{
+        #formUpload, .modal{
             display: none;
         }
 
@@ -33,6 +34,15 @@
             width: 200px;
             height: 200px;
         }
+
+        .slider{
+            width: 80%;
+            left:10%;
+        }
+
+        .modal{
+            max-height: 90%;
+        }
     </style>
 
     <button id="btnFacebook">Inicia sesión con Facebook para poder compartir tu día!</button>
@@ -52,7 +62,14 @@
         <div id="storyDetail">
 
         </div>
-        
+
+        <div class="modal" id="modal1">
+            <div class="slider">
+                <ul class="slides">
+
+                </ul>
+            </div>
+        </div>
     </div>
     
 <script
@@ -74,7 +91,20 @@
   firebase.initializeApp(config);
 </script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
+
 <script>
+
+    $(document).ready(function(){
+        console.log("Hola");
+        $('.slider').slider({
+        });
+
+         $(document).ready(function(){
+    // the "href" attribute of .modal-trigger must specify the modal ID that wants to be triggered
+    $('.modal').modal();
+  });
+    });
 
     //Scripts para autenticacion
     $('#btnFacebook').click(function(){
@@ -128,7 +158,7 @@
                     snapshot.forEach(function(client)
                     {
                         //console.log(client.val());
-                        $('#storiesList').append('<div class="card" data-id="'+client.val().uid+'"><img src="' + client.val().profileImage +'" class="imagen_client"><h3 class="nombrecito">'+client.val().nombre+'</h3></div>');
+                        $('#storiesList').append('<a href="#modal1"><div class="card" data-id="'+client.val().uid+'"><img src="' + client.val().profileImage +'" class="imagen_client"><h3 class="nombrecito">'+client.val().nombre+'</h3></div></a>');
                     });0
                 });
 
@@ -157,7 +187,7 @@
                         break;
                     }
                 },
-                function(){
+                function(){zz
                     console.log("Se subio papu");
                     var downloadURL = uploadTask.snapshot.downloadURL;
                     uploadToDatabase(downloadURL);
@@ -177,18 +207,24 @@
                 var uid = $(this).data('id');
                 console.log(uid);
                 $('#storyDetail').text('');
-                db.ref('historias/' + uid).on('child_added', function(story)
+                $('.slides').text('');
+                //db.ref('historias/' + uid).on('child_added', function(story)
+                db.ref('historias/'+ uid).once('value')
+                .then(function(snapshot)
                     {
-                        //snapshot.forEach(function(story){
+                        snapshot.forEach(function(story){
 
                             $('#storyDetail').append('<div class="card" data-id="'+story.val().uid+'"><img src="' + story.val().media +'" class="imagen_story"><h5 class="descripcion">'+story.val().descripcion+'</h3></div>');
-                        //});
-                    });
+                            $('.slides').append('<li><img src="'+story.val().media+'"><div class="caption center-align"><h5>'+story.val().descripcion+'</h5></div></li>');
+                        });
+                        $('.slider').slider({
+                                'height':500,
+                                'interval':3000
+                            });
+                });
             });
         }
     });
-
-    
 </script>
 </body>
 </html>

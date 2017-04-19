@@ -187,7 +187,7 @@
                         break;
                     }
                 },
-                function(){zz
+                function(){
                     console.log("Se subio papu");
                     var downloadURL = uploadTask.snapshot.downloadURL;
                     uploadToDatabase(downloadURL);
@@ -214,8 +214,8 @@
                     {
                         snapshot.forEach(function(story){
 
-                            $('#storyDetail').append('<div class="card" data-id="'+story.val().uid+'"><img src="' + story.val().media +'" class="imagen_story"><h5 class="descripcion">'+story.val().descripcion+'</h3></div>');
-                            $('.slides').append('<li><img src="'+story.val().media+'"><div class="caption center-align"><h5>'+story.val().descripcion+'</h5></div></li>');
+                            $('#storyDetail').prepend('<div class="card" data-id="'+story.val().uid+'"><img src="' + story.val().media +'" class="imagen_story"><h5 class="descripcion">'+story.val().descripcion+'</h3></div>');
+                            $('.slides').prepend('<li><img src="'+story.val().media+'"><div class="caption center-align"><h5>'+story.val().descripcion+'</h5></div></li>');
                         });
                         $('.slider').slider({
                                 'height':500,
